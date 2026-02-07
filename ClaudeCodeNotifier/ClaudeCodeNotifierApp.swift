@@ -47,17 +47,19 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
         }
 
         if url.scheme == "claudenotifier" && url.host == "notify" {
-            showNotification()
+            let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
+            let message = components?.queryItems?.first(where: { $0.name == "message" })?.value ?? "Done!"
+            showNotification(message: message)
             NSApp.hide(nil)
         }
     }
 
-    func showNotification() {
+    func showNotification(message: String) {
         let center = UNUserNotificationCenter.current()
 
         let content = UNMutableNotificationContent()
         content.title = "Claude Code"
-        content.body = "Done!"
+        content.body = message
         content.sound = UNNotificationSound.default
 
         let request = UNNotificationRequest(
