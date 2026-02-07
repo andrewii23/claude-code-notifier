@@ -29,7 +29,7 @@ Flow: External caller opens `claudenotifier://notify` â†’ macOS routes to app â†
 
 ## Key Details
 
-- Bundle ID: `ii23.CCNoti`
+- Bundle ID: `ii23.ClaudeCodeNotifier`
 - Target: macOS 26.2
 - Swift concurrency: MainActor default isolation, approachable concurrency enabled
 - Standard Xcode project (no SPM/CocoaPods)
