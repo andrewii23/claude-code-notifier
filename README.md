@@ -14,8 +14,8 @@ Native macOS notification bridge for [Claude Code](https://claude.ai/code). Get 
 ### From Source
 
 ```bash
-git clone https://github.com/ii23/ClaudeCodeNotifier.git
-cd ClaudeCodeNotifier
+git clone https://github.com/andrewii23/claude-code-notifier.git
+cd claude-code-notifier
 open "CC Noti.xcodeproj"
 ```
 

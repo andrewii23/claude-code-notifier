@@ -34,18 +34,27 @@ final class Updater {
 
     private init() {}
 
+    private static let repoOwner = "andrewii23"
+    private static let repoName = "claude-code-notifier"
+
     func checkForUpdates() async {
         state = .checking
         targetRelease = nil
         progress = 0
 
-        guard let url = URL(string: "https://api.github.com/repos/ii23/ClaudeCodeNotifier/releases/latest") else {
+        guard let url = URL(string: "https://api.github.com/repos/\(Self.repoOwner)/\(Self.repoName)/releases/latest") else {
             state = .failed("Invalid URL")
             return
         }
 
         do {
-            let (data, _) = try await URLSession.shared.data(from: url)
+            let (data, response) = try await URLSession.shared.data(from: url)
+
+            if let http = response as? HTTPURLResponse, http.statusCode == 404 {
+                state = .upToDate
+                return
+            }
+
             let decoder = JSONDecoder()
             decoder.dateDecodingStrategy = .iso8601
             let release = try decoder.decode(Release.self, from: data)
