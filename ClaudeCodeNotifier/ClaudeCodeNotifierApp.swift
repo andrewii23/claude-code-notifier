@@ -167,10 +167,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
             result = result.replacingOccurrences(of: "  +", with: " ", options: .regularExpression)
             result = result.trimmingCharacters(in: .whitespaces)
 
-            if result.count > 200 {
-                result = String(result.prefix(197)) + "..."
-            }
-
             return result.isEmpty ? nil : result
         }
 
@@ -184,9 +180,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
         content.title = title
         content.body = message
         let soundName = UserDefaults.standard.string(forKey: "notificationSound") ?? "Default"
-        content.sound = soundName == "Default"
-            ? .default
-            : UNNotificationSound(named: UNNotificationSoundName(soundName + ".aiff"))
+        let customFile = UserDefaults.standard.string(forKey: "customSoundFile") ?? ""
+        content.sound = NotificationSettingsView.notificationSound(name: soundName, customFile: customFile)
 
         let request = UNNotificationRequest(
             identifier: UUID().uuidString,
