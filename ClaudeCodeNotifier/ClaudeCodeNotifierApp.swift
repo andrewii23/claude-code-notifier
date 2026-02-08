@@ -46,8 +46,7 @@ final class SettingsWindowManager: NSObject, NSWindowDelegate {
             backing: .buffered,
             defer: false
         )
-        window.titlebarAppearsTransparent = true
-        window.titleVisibility = .hidden
+        window.title = "Settings"
         window.delegate = self
         window.contentView = NSHostingView(rootView: settingsView)
         window.center()

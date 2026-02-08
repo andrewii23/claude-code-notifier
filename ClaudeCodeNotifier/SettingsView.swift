@@ -1,114 +1,52 @@
 import SwiftUI
 
 struct SettingsView: View {
-    @State private var selectedTab: SettingsTab = .general
+    @State private var selectedTab: SettingsTab? = .general
     @AppStorage("appearance") private var appearance = AppAppearance.auto.rawValue
 
     var body: some View {
-        HStack(spacing: 0) {
-            sidebar
-            Divider()
-            contentPane
+        NavigationSplitView {
+            List(selection: $selectedTab) {
+                Section("Settings") {
+                    ForEach(SettingsTab.settingsTabs) { tab in
+                        Label {
+                            Text(tab.title)
+                        } icon: {
+                            SettingsIconView(systemImage: tab.icon)
+                        }
+                        .tag(tab)
+                    }
+                }
+
+                Section(Bundle.main.appName) {
+                    ForEach(SettingsTab.appTabs) { tab in
+                        Label {
+                            Text(tab.title)
+                        } icon: {
+                            SettingsIconView(systemImage: tab.icon)
+                        }
+                        .tag(tab)
+                    }
+                }
+            }
+            .navigationSplitViewColumnWidth(200)
+        } detail: {
+            if let selectedTab {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 10) {
+                        selectedTab.view()
+                    }
+                    .padding(20)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                .navigationTitle(selectedTab.title)
+            }
         }
-        .ignoresSafeArea()
+        .navigationSplitViewStyle(.balanced)
         .frame(width: 660, height: 420)
         .onChange(of: appearance, initial: true) { _, newValue in
             NSApp.appearance = AppAppearance(rawValue: newValue)?.nsAppearance
         }
-    }
-
-    private var sidebar: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
-                SidebarSection(title: "Settings", tabs: SettingsTab.settingsTabs, selectedTab: $selectedTab)
-                SidebarSection(title: Bundle.main.appName, tabs: SettingsTab.appTabs, selectedTab: $selectedTab)
-            }
-            .padding(.bottom, 12)
-        }
-        .padding(.top, 50)
-        .padding(.horizontal, 12)
-        .frame(width: 240)
-    }
-
-    private var contentPane: some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 8) {
-                SettingsIconView(systemImage: selectedTab.icon)
-                Text(selectedTab.title)
-                    .font(.title2.bold())
-                Spacer()
-            }
-            .frame(height: 50)
-            .padding(.horizontal, 12)
-
-            ScrollView {
-                VStack(alignment: .leading, spacing: 10) {
-                    selectedTab.view()
-                }
-                .padding(.horizontal, 12)
-                .padding(.top, 2)
-                .padding(.bottom, 12)
-            }
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-    }
-}
-
-struct SidebarSection: View {
-    let title: String
-    let tabs: [SettingsTab]
-    @Binding var selectedTab: SettingsTab
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(title)
-                .font(.system(.body, weight: .medium))
-                .foregroundStyle(.secondary)
-                .padding(.leading, 6)
-
-            ForEach(tabs) { tab in
-                SidebarTabButton(tab: tab, isSelected: selectedTab == tab) {
-                    selectedTab = tab
-                }
-            }
-        }
-    }
-}
-
-struct SidebarTabButton: View {
-    let tab: SettingsTab
-    let isSelected: Bool
-    let action: () -> Void
-
-    @State private var isHovering = false
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 8) {
-                SettingsIconView(systemImage: tab.icon)
-                Text(tab.title)
-                    .font(.system(size: 13))
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(6)
-            .frame(minHeight: 30)
-            .background(
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(backgroundColor)
-            )
-            .contentShape(RoundedRectangle(cornerRadius: 8))
-        }
-        .buttonStyle(.plain)
-        .onHover { isHovering = $0 }
-    }
-
-    private var backgroundColor: Color {
-        if isSelected {
-            return .white.opacity(0.15)
-        } else if isHovering {
-            return .white.opacity(0.07)
-        }
-        return .clear
     }
 }
 
