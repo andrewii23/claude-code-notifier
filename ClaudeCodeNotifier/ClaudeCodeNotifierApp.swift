@@ -87,7 +87,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
         let hideIcon = UserDefaults.standard.bool(forKey: "hideMenuBarIcon")
         NSApp.setActivationPolicy(hideIcon ? .regular : .accessory)
 
-        if CommandLine.arguments.contains("--after-update") {
+        if UserDefaults.standard.bool(forKey: "showAfterUpdate") {
+            UserDefaults.standard.removeObject(forKey: "showAfterUpdate")
             SettingsWindowManager.shared.show()
         }
 

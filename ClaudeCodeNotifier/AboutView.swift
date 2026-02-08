@@ -39,21 +39,14 @@ struct AboutView: View {
                             .controlSize(.small)
                     }
                 case .available:
-                    if let release = updater.targetRelease {
-                        HStack {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Version \(release.tagName) available")
-                                    .font(.subheadline)
-                                Text(release.name)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                            Spacer()
-                            Button("Update") {
-                                Task { await updater.installUpdate() }
-                            }
-                            .buttonStyle(.borderedProminent)
+                    HStack {
+                        Text("Version \(updater.targetRelease?.tagName ?? "") available")
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        Button("Update") {
+                            Task { await updater.installUpdate() }
                         }
+                        .buttonStyle(.borderedProminent)
                     }
                 case .downloading, .installing:
                     HStack {
