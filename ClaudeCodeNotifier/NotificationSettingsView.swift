@@ -30,18 +30,18 @@ struct NotificationSettingsView: View {
                     guard newValue != "Default" else { return }
                     NSSound(named: NSSound.Name(newValue))?.play()
                 }
+
+                HStack {
+                    Spacer()
+                    Button("Test Notification") {
+                        sendTestNotification()
+                    }
+                    .buttonStyle(.bordered)
+                }
             }
         }
         .formStyle(.grouped)
         .scrollContentBackground(.hidden)
-        .safeAreaInset(edge: .bottom, alignment: .trailing) {
-            Button("Test Notification") {
-                sendTestNotification()
-            }
-            .buttonStyle(.bordered)
-            .padding(.trailing, 20)
-            .padding(.bottom, 12)
-        }
     }
 
     private func sendTestNotification() {

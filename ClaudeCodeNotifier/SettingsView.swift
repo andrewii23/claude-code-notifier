@@ -80,7 +80,7 @@ struct SettingsIconView: View {
     }
 }
 
-private extension Bundle {
+extension Bundle {
     var appName: String {
         object(forInfoDictionaryKey: "CFBundleDisplayName") as? String
             ?? object(forInfoDictionaryKey: "CFBundleName") as? String

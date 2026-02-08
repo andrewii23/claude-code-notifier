@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct AboutView: View {
+    @State private var isCheckingForUpdates = false
+
     private var appVersion: String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
     }
@@ -11,11 +13,11 @@ struct AboutView: View {
                 HStack(spacing: 12) {
                     Image(nsImage: NSApp.applicationIconImage)
                         .resizable()
-                        .frame(width: 48, height: 48)
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                        .frame(width: 40, height: 40)
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
 
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("ClaudeCodeNotifier")
+                        Text(Bundle.main.appName)
                             .font(.headline)
                         Text("Version \(appVersion)")
                             .font(.subheadline)
@@ -23,6 +25,22 @@ struct AboutView: View {
                     }
 
                     Spacer()
+
+                    Button("Check for Updates") {
+                        checkForUpdates()
+                    }
+                    .buttonStyle(.bordered)
+                    .disabled(isCheckingForUpdates)
+                }
+
+                if isCheckingForUpdates {
+                    HStack {
+                        Text("Checking for updates...")
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        ProgressView()
+                            .controlSize(.small)
+                    }
                 }
             }
 
@@ -33,5 +51,13 @@ struct AboutView: View {
         }
         .formStyle(.grouped)
         .scrollContentBackground(.hidden)
+    }
+
+    private func checkForUpdates() {
+        isCheckingForUpdates = true
+        Task {
+            try? await Task.sleep(for: .seconds(2))
+            isCheckingForUpdates = false
+        }
     }
 }
