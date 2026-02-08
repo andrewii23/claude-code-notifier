@@ -8,37 +8,53 @@ struct NotificationSettingsView: View {
     @AppStorage("notificationSound") private var notificationSound = "Default"
 
     var body: some View {
-        SettingsSection {
-            SettingsTextFieldRow(placeholder: "Claude Code", text: $notificationTitle, label: "Title")
-            SettingsToggleRow(title: "Use fixed message", isOn: $useFixedMessage)
+        Form {
+            Section {
+                TextField("Title", text: $notificationTitle, prompt: Text("Claude Code"))
 
-            if useFixedMessage {
-                SettingsTextFieldRow(placeholder: "Done!", text: $fixedMessage, label: "Message")
+                Toggle("Use fixed message", isOn: $useFixedMessage)
+                    .tint(Color.accentOrange)
+
+                if useFixedMessage {
+                    TextField("Message", text: $fixedMessage, prompt: Text("Done!"))
+                }
+
+                Picker("Alert sound", selection: $notificationSound) {
+                    Text("Default").tag("Default")
+                    Divider()
+                    ForEach(Self.systemSounds, id: \.self) { sound in
+                        Text(sound).tag(sound)
+                    }
+                }
+                .onChange(of: notificationSound) { _, newValue in
+                    guard newValue != "Default" else { return }
+                    NSSound(named: NSSound.Name(newValue))?.play()
+                }
             }
-
-            SoundPickerRow(selection: $notificationSound)
         }
-
-        HStack {
-            Spacer()
+        .formStyle(.grouped)
+        .scrollContentBackground(.hidden)
+        .safeAreaInset(edge: .bottom, alignment: .trailing) {
             Button("Test Notification") {
-                let content = UNMutableNotificationContent()
-                content.title = notificationTitle.isEmpty ? "Claude Code" : notificationTitle
-                content.body = useFixedMessage ? (fixedMessage.isEmpty ? "Done!" : fixedMessage) : "Test notification"
-                content.sound = notificationSound == "Default"
-                    ? .default
-                    : UNNotificationSound(named: UNNotificationSoundName(notificationSound + ".aiff"))
-                UNUserNotificationCenter.current().add(
-                    UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
-                )
+                sendTestNotification()
             }
             .buttonStyle(.bordered)
+            .padding(.trailing, 20)
+            .padding(.bottom, 12)
         }
     }
-}
 
-struct SoundPickerRow: View {
-    @Binding var selection: String
+    private func sendTestNotification() {
+        let content = UNMutableNotificationContent()
+        content.title = notificationTitle.isEmpty ? "Claude Code" : notificationTitle
+        content.body = useFixedMessage ? (fixedMessage.isEmpty ? "Done!" : fixedMessage) : "Test notification"
+        content.sound = notificationSound == "Default"
+            ? .default
+            : UNNotificationSound(named: UNNotificationSoundName(notificationSound + ".aiff"))
+        UNUserNotificationCenter.current().add(
+            UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
+        )
+    }
 
     private static let systemSounds: [String] = {
         let fm = FileManager.default
@@ -48,26 +64,4 @@ struct SoundPickerRow: View {
             .map { $0.replacingOccurrences(of: ".aiff", with: "") }
             .sorted()
     }()
-
-    var body: some View {
-        HStack {
-            Text("Alert sound")
-                .padding(.vertical, 4)
-            Spacer()
-            Picker("Alert sound", selection: $selection) {
-                Text("Default").tag("Default")
-                Divider()
-                ForEach(Self.systemSounds, id: \.self) { sound in
-                    Text(sound).tag(sound)
-                }
-            }
-            .labelsHidden()
-            .onChange(of: selection) { _, newValue in
-                guard newValue != "Default" else { return }
-                NSSound(named: NSSound.Name(newValue))?.play()
-            }
-        }
-        .padding(.horizontal, 8)
-        .frame(minHeight: 30)
-    }
 }

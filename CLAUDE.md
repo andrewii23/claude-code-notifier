@@ -28,11 +28,11 @@ Hook (`~/.claude/hooks/notify_stop.sh`) receives stop event JSON via stdin → `
 ### App Structure
 
 - **ClaudeCodeNotifierApp.swift** — `@main` entry point. `MenuBarExtra` provides menu bar icon with Settings/Quit. `SettingsWindowManager` (singleton) manages a custom `NSWindow` hosting SwiftUI settings. `AppDelegate` handles URL scheme via Apple Events, notification permissions, `Cmd+,` shortcut, and JSONL transcript parsing (`parseTranscript(at:)` using `JSONSerialization`).
-- **SettingsView.swift** — Two-pane settings window with sidebar navigation. Contains reusable `SidebarSection`, `SidebarTabButton`, and `SettingsIconView` components.
+- **SettingsView.swift** — `NavigationSplitView` with `List(selection:)` sidebar and detail pane. Contains `SettingsIconView` for sidebar icon badges.
 - **SettingsTab.swift** — `SettingsTab` enum defines tabs (general, notification, about) with icons, titles, and view routing. Also defines `Color.accentOrange`.
-- **GeneralSettingsView.swift** — Launch-at-login (`SMAppService`), hide menu bar icon, appearance picker. Contains all reusable settings row components: `SettingsSection`, `SettingsToggleRow`, `SettingsTextFieldRow`, `SettingsInfoRow`, `SettingsPickerRow`.
-- **NotificationSettingsView.swift** — Custom title, fixed message toggle, sound picker (reads `/System/Library/Sounds`), test notification button. `SoundPickerRow` is defined here.
-- **AboutView.swift** — App icon, version, developer info.
+- **GeneralSettingsView.swift** — Launch-at-login (`SMAppService`), hide menu bar icon, appearance picker. Uses native `Form` with `.formStyle(.grouped)`, `Toggle`, `Picker`, `LabeledContent`.
+- **NotificationSettingsView.swift** — Custom title, fixed message toggle, sound picker (reads `/System/Library/Sounds`), test notification button. Uses native `Form` with `.formStyle(.grouped)`.
+- **AboutView.swift** — App icon, version, developer info. Uses native `Form` with `LabeledContent`.
 - **ContentView.swift** — Unused template stub.
 
 ### UserDefaults Keys (`@AppStorage`)
@@ -58,5 +58,5 @@ The app uses a custom `NSWindow` (not `Settings` scene) managed by `SettingsWind
 - Swift concurrency: MainActor default isolation, approachable concurrency enabled
 - Standard Xcode project (no SPM/CocoaPods)
 - URL scheme: `claudenotifier` (declared in Info.plist)
-- Reusable settings components live in `GeneralSettingsView.swift`, not in a separate file
+- Settings views use native SwiftUI `Form`, `Toggle`, `Picker`, `LabeledContent` — no custom row components
 - Hook script (`~/.claude/hooks/notify_stop.sh`) is pure bash — uses `plutil` for JSON extraction and `osascript -l JavaScript` for URL encoding (no Python/jq dependency)

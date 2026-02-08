@@ -32,14 +32,8 @@ struct SettingsView: View {
             .navigationSplitViewColumnWidth(200)
         } detail: {
             if let selectedTab {
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 10) {
-                        selectedTab.view()
-                    }
-                    .padding(20)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                .navigationTitle(selectedTab.title)
+                selectedTab.view()
+                    .navigationTitle(selectedTab.title)
             }
         }
         .navigationSplitViewStyle(.balanced)
