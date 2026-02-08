@@ -22,6 +22,12 @@ struct GeneralSettingsView: View {
                 }
 
             SettingsToggleRow(title: "Hide menu bar icon", isOn: $hideMenuBarIcon)
+                .onChange(of: hideMenuBarIcon) { _, hidden in
+                    if hidden {
+                        NSApp.setActivationPolicy(.regular)
+                        NSApp.activate()
+                    }
+                }
 
             SettingsPickerRow(
                 title: "Appearance",

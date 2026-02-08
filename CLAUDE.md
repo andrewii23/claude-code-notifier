@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-CC Noti (ClaudeCodeNotifier) is a macOS menu bar app that listens for `claudenotifier://notify` URL scheme callbacks and displays native macOS notifications. It runs as a background-only menu bar app with no main window.
+CC Noti (ClaudeCodeNotifier) is a macOS menu bar app that listens for `claudenotifier://notify` URL scheme callbacks and displays native macOS notifications. It runs as a background-only menu bar app (`.accessory` activation policy) with no main window. App Sandbox is disabled to allow direct reading of transcript files from `~/.claude/projects/`.
 
 ## Build Commands
 
@@ -21,11 +21,35 @@ xcodebuild -project "CC Noti.xcodeproj" -scheme ClaudeCodeNotifier -configuratio
 
 ## Architecture
 
-- **ClaudeCodeNotifierApp.swift** — App entry point using `MenuBarExtra` for background menu bar presence. Contains `AppDelegate` that handles URL scheme registration, notification permissions, and `UNUserNotificationCenter` delegation.
-- **ContentView.swift** — Unused SwiftUI stub from template.
-- **Info.plist** — Declares `claudenotifier` URL scheme.
+### Notification Flow
 
-Flow: External caller opens `claudenotifier://notify` → macOS routes to app → `AppDelegate` handles Apple Event → triggers `UNUserNotification` with "Claude Code - Done!".
+Hook (`~/.claude/hooks/notify_stop.sh`) receives stop event JSON via stdin → `plutil` extracts `transcript_path` → `osascript -l JavaScript` URL-encodes the path → `open -g "claudenotifier://notify?transcript=<encoded-path>"` → macOS routes to app → `AppDelegate.handleURLEvent` checks for `transcript` param first, falls back to `message`, then `"Done!"` → `parseTranscript(at:)` reads JSONL, finds last assistant message, strips markdown → applies user preferences (title, fixed message override, sound) from `UserDefaults` → fires `UNUserNotification`.
+
+### App Structure
+
+- **ClaudeCodeNotifierApp.swift** — `@main` entry point. `MenuBarExtra` provides menu bar icon with Settings/Quit. `SettingsWindowManager` (singleton) manages a custom `NSWindow` hosting SwiftUI settings. `AppDelegate` handles URL scheme via Apple Events, notification permissions, `Cmd+,` shortcut, and JSONL transcript parsing (`parseTranscript(at:)` using `JSONSerialization`).
+- **SettingsView.swift** — Two-pane settings window with sidebar navigation. Contains reusable `SidebarSection`, `SidebarTabButton`, and `SettingsIconView` components.
+- **SettingsTab.swift** — `SettingsTab` enum defines tabs (general, notification, about) with icons, titles, and view routing. Also defines `Color.accentOrange`.
+- **GeneralSettingsView.swift** — Launch-at-login (`SMAppService`), hide menu bar icon, appearance picker. Contains all reusable settings row components: `SettingsSection`, `SettingsToggleRow`, `SettingsTextFieldRow`, `SettingsInfoRow`, `SettingsPickerRow`.
+- **NotificationSettingsView.swift** — Custom title, fixed message toggle, sound picker (reads `/System/Library/Sounds`), test notification button. `SoundPickerRow` is defined here.
+- **AboutView.swift** — App icon, version, developer info.
+- **ContentView.swift** — Unused template stub.
+
+### UserDefaults Keys (`@AppStorage`)
+
+| Key | Type | Default | Used in |
+|-----|------|---------|---------|
+| `hideMenuBarIcon` | Bool | `false` | App, General |
+| `launchAtLogin` | Bool | `false` | General |
+| `appearance` | String | `"auto"` | General, Settings |
+| `notificationTitle` | String | `""` | Notification, AppDelegate |
+| `useFixedMessage` | Bool | `false` | Notification, AppDelegate |
+| `fixedMessage` | String | `""` | Notification, AppDelegate |
+| `notificationSound` | String | `"Default"` | Notification, AppDelegate |
+
+### Settings Window Pattern
+
+The app uses a custom `NSWindow` (not `Settings` scene) managed by `SettingsWindowManager`. When opened, activation policy switches to `.regular`; on close, back to `.accessory` unless `hideMenuBarIcon` is true (Dock icon stays visible to prevent lockout).
 
 ## Key Details
 
@@ -33,3 +57,6 @@ Flow: External caller opens `claudenotifier://notify` → macOS routes to app �
 - Target: macOS 26.2
 - Swift concurrency: MainActor default isolation, approachable concurrency enabled
 - Standard Xcode project (no SPM/CocoaPods)
+- URL scheme: `claudenotifier` (declared in Info.plist)
+- Reusable settings components live in `GeneralSettingsView.swift`, not in a separate file
+- Hook script (`~/.claude/hooks/notify_stop.sh`) is pure bash — uses `plutil` for JSON extraction and `osascript -l JavaScript` for URL encoding (no Python/jq dependency)

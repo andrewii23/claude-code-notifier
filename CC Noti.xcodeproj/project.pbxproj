@@ -29,9 +29,22 @@
 		B4F281D72F21CCDF00FD076A /* ClaudeCodeNotifierUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ClaudeCodeNotifierUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		B4F281EA2F21CCDF00FD076A /* Exceptions for "ClaudeCodeNotifier" folder in "Copy Bundle Resources" phase from "ClaudeCodeNotifier" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = B4F281BF2F21CCDE00FD076A /* ClaudeCodeNotifier */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		B4F281C22F21CCDE00FD076A /* ClaudeCodeNotifier */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				B4F281EA2F21CCDF00FD076A /* Exceptions for "ClaudeCodeNotifier" folder in "Copy Bundle Resources" phase from "ClaudeCodeNotifier" target */,
+			);
 			path = ClaudeCodeNotifier;
 			sourceTree = "<group>";
 		};
@@ -397,9 +410,8 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				ENABLE_APP_SANDBOX = YES;
+				ENABLE_APP_SANDBOX = NO;
 				ENABLE_PREVIEWS = YES;
-				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ClaudeCodeNotifier/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = ClaudeCodeNotifier;
@@ -431,9 +443,8 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				ENABLE_APP_SANDBOX = YES;
+				ENABLE_APP_SANDBOX = NO;
 				ENABLE_PREVIEWS = YES;
-				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ClaudeCodeNotifier/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = ClaudeCodeNotifier;

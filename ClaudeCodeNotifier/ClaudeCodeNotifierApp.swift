@@ -60,7 +60,10 @@ final class SettingsWindowManager: NSObject, NSWindowDelegate {
     }
 
     func windowWillClose(_ notification: Notification) {
-        NSApp.setActivationPolicy(.accessory)
+        let hideIcon = UserDefaults.standard.bool(forKey: "hideMenuBarIcon")
+        if !hideIcon {
+            NSApp.setActivationPolicy(.accessory)
+        }
     }
 }
 
@@ -82,7 +85,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
             andEventID: AEEventID(kAEGetURL)
         )
 
-        NSApp.setActivationPolicy(.accessory)
+        let hideIcon = UserDefaults.standard.bool(forKey: "hideMenuBarIcon")
+        NSApp.setActivationPolicy(hideIcon ? .regular : .accessory)
 
         NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
             if event.modifierFlags.contains(.command) && event.charactersIgnoringModifiers == "," {
@@ -110,7 +114,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
 
         if url.scheme == "claudenotifier" && url.host == "notify" {
             let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
-            let dynamicMessage = components?.queryItems?.first(where: { $0.name == "message" })?.value ?? "Done!"
+            let queryItems = components?.queryItems
+
+            var dynamicMessage: String
+            if let transcriptPath = queryItems?.first(where: { $0.name == "transcript" })?.value {
+                dynamicMessage = parseTranscript(at: transcriptPath) ?? "Done!"
+            } else {
+                dynamicMessage = queryItems?.first(where: { $0.name == "message" })?.value ?? "Done!"
+            }
 
             let defaults = UserDefaults.standard
             let title = defaults.string(forKey: "notificationTitle").flatMap { $0.isEmpty ? nil : $0 } ?? "Claude Code"
@@ -120,6 +131,51 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
 
             showNotification(title: title, message: body)
         }
+    }
+
+    private func parseTranscript(at path: String) -> String? {
+        guard let data = FileManager.default.contents(atPath: path),
+              let content = String(data: data, encoding: .utf8) else {
+            return nil
+        }
+
+        let lines = content.components(separatedBy: .newlines)
+
+        for line in lines.reversed() {
+            guard !line.isEmpty,
+                  let lineData = line.data(using: .utf8),
+                  let json = try? JSONSerialization.jsonObject(with: lineData) as? [String: Any],
+                  json["type"] as? String == "assistant" else {
+                continue
+            }
+
+            guard let message = json["message"] as? [String: Any],
+                  let contentArray = message["content"] as? [[String: Any]] else {
+                continue
+            }
+
+            let texts = contentArray.compactMap { item -> String? in
+                guard item["type"] as? String == "text" else { return nil }
+                return item["text"] as? String
+            }
+
+            guard !texts.isEmpty else { continue }
+
+            var result = texts.joined(separator: " ")
+            let markdownChars = CharacterSet(charactersIn: "*_`#~[]")
+            result = String(result.unicodeScalars.filter { !markdownChars.contains($0) })
+            result = result.replacingOccurrences(of: "\n", with: " ")
+            result = result.replacingOccurrences(of: "  +", with: " ", options: .regularExpression)
+            result = result.trimmingCharacters(in: .whitespaces)
+
+            if result.count > 200 {
+                result = String(result.prefix(197)) + "..."
+            }
+
+            return result.isEmpty ? nil : result
+        }
+
+        return nil
     }
 
     func showNotification(title: String, message: String) {

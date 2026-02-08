@@ -45,7 +45,9 @@ struct SettingsView: View {
                 VStack(alignment: .leading, spacing: 10) {
                     selectedTab.view()
                 }
-                .padding(12)
+                .padding(.horizontal, 12)
+                .padding(.top, 2)
+                .padding(.bottom, 12)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
