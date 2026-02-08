@@ -5,12 +5,26 @@ import UserNotifications
 struct ClaudeCodeNotifierApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @AppStorage("hideMenuBarIcon") private var hideMenuBarIcon = false
+    @AppStorage("notificationsEnabled") private var notificationsEnabled = true
 
     var body: some Scene {
         MenuBarExtra("ClaudeCodeNotifier", image: "menubarIcon", isInserted: Binding(
             get: { !hideMenuBarIcon },
             set: { hideMenuBarIcon = !$0 }
         )) {
+            Button {
+                notificationsEnabled.toggle()
+            } label: {
+                Label(
+                    notificationsEnabled ? "Disable Notifications" : "Enable Notifications",
+                    systemImage: notificationsEnabled ? "xmark.circle.fill" : "checkmark.circle.fill"
+                )
+            }
+
+            Divider()
+
+            Text("Version \(Bundle.main.appVersion ?? "1.0")")
+
             Button("Settings...") {
                 SettingsWindowManager.shared.show()
             }
@@ -71,6 +85,8 @@ final class SettingsWindowManager: NSObject, NSWindowDelegate {
 
 class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
+        UserDefaults.standard.register(defaults: ["notificationsEnabled": true])
+
         let center = UNUserNotificationCenter.current()
         center.delegate = self
 
@@ -186,6 +202,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
     }
 
     func showNotification(title: String, message: String) {
+        guard UserDefaults.standard.bool(forKey: "notificationsEnabled") else { return }
+
         let center = UNUserNotificationCenter.current()
 
         let content = UNMutableNotificationContent()
