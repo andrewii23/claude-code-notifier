@@ -11,6 +11,10 @@ Native macOS notification bridge for [Claude Code](https://claude.ai/code). Get 
 
 ## Install
 
+### Download
+
+Download the latest release from [Releases](https://github.com/andrewii23/claude-code-notifier/releases), unzip, and drag to Applications.
+
 ### From Source
 
 ```bash
@@ -23,15 +27,25 @@ Build and run in Xcode (Cmd+R). The app appears in your menu bar.
 
 ### Hook Setup
 
+Open Settings > Setup and click **Install**. This automatically creates the hook script and updates your Claude Code settings.
+
+<details>
+<summary>Manual setup</summary>
+
 Create `~/.claude/hooks/notify_stop.sh`:
 
 ```bash
 #!/bin/bash
-read -r JSON
-TRANSCRIPT=$(echo "$JSON" | plutil -extract transcript_path raw -o - -)
-[ -z "$TRANSCRIPT" ] && exit 0
-ENCODED=$(osascript -l JavaScript -e "encodeURIComponent('$TRANSCRIPT')")
-open -g "claudenotifier://notify?transcript=$ENCODED"
+INPUT=$(cat)
+sleep 0.5
+TRANSCRIPT=$(printf '%s' "$INPUT" | plutil -extract transcript_path raw -o - -- -)
+if [ -n "$TRANSCRIPT" ] && [ "$TRANSCRIPT" != "<stdin>" ]; then
+    ENCODED=$(osascript -l JavaScript -e 'function run(argv) { return encodeURIComponent(argv[0]) }' -- "$TRANSCRIPT")
+    open -g "claudenotifier://notify?transcript=${ENCODED}"
+else
+    open -g "claudenotifier://notify"
+fi
+exit 0
 ```
 
 Make it executable:
@@ -40,24 +54,35 @@ Make it executable:
 chmod +x ~/.claude/hooks/notify_stop.sh
 ```
 
-Add to your Claude Code hooks config (`~/.claude/hooks.json`):
+Add to `~/.claude/settings.json`:
 
 ```json
 {
-  "hooks": [
-    {
-      "event": "stop",
-      "command": "~/.claude/hooks/notify_stop.sh"
-    }
-  ]
+  "hooks": {
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/notify_stop.sh"
+          }
+        ]
+      }
+    ]
+  }
 }
 ```
+
+</details>
 
 ## Features
 
 - Native macOS notifications via `UNUserNotificationCenter`
 - Reads Claude's last response from JSONL transcripts
+- One-click hook installer (Settings > Setup)
 - Custom notification title, sound, and fixed message options
+- Custom sound file support (aiff, wav, caf, m4a)
 - Launch at login support
 - Light/dark/auto appearance
 - Menu bar app with no Dock icon
@@ -73,7 +98,8 @@ Add to your Claude Code hooks config (`~/.claude/hooks.json`):
 | Appearance | Auto / Light / Dark |
 | Notification title | Custom title (default: "Claude Code") |
 | Fixed message | Always show the same message |
-| Alert sound | Choose from system sounds |
+| Alert sound | Choose from system sounds or custom file |
+| Hook installer | One-click install/uninstall Claude Code hook |
 
 ## Requirements
 

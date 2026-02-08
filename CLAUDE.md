@@ -29,9 +29,10 @@ Hook (`~/.claude/hooks/notify_stop.sh`) receives stop event JSON via stdin → `
 
 - **ClaudeCodeNotifierApp.swift** — `@main` entry point. `MenuBarExtra` provides menu bar icon with Settings/Quit. `SettingsWindowManager` (singleton) manages a custom `NSWindow` hosting SwiftUI settings. `AppDelegate` handles URL scheme via Apple Events, notification permissions, `Cmd+,` shortcut, and JSONL transcript parsing (`parseTranscript(at:)` using `JSONSerialization`).
 - **SettingsView.swift** — `NavigationSplitView` with `List(selection:)` sidebar and detail pane. Contains `SettingsIconView` for sidebar icon badges.
-- **SettingsTab.swift** — `SettingsTab` enum defines tabs (general, notification, about) with icons, titles, and view routing. Also defines `Color.accentOrange`.
+- **SettingsTab.swift** — `SettingsTab` enum defines tabs (general, notification, setup, about) with icons, titles, and view routing. Also defines `Color.accentOrange`.
 - **GeneralSettingsView.swift** — Launch-at-login (`SMAppService`), hide menu bar icon, appearance picker. Uses native `Form` with `.formStyle(.grouped)`, `Toggle`, `Picker`, `LabeledContent`.
-- **NotificationSettingsView.swift** — Custom title, fixed message toggle, sound picker (reads `/System/Library/Sounds`), test notification button. Uses native `Form` with `.formStyle(.grouped)`.
+- **NotificationSettingsView.swift** — Custom title, fixed message toggle, sound picker (reads `/System/Library/Sounds`), custom sound file importer (copies to `~/Library/Sounds`), test notification button. `notificationSound()` static helper resolves sound name to `UNNotificationSound`. Uses native `Form` with `.formStyle(.grouped)`.
+- **HookInstallerView.swift** — One-click hook installer/uninstaller. `HookInstaller` enum creates `~/.claude/hooks/notify_stop.sh` and updates `~/.claude/settings.json` with the Stop hook entry. Shows install status (installed/not installed/partial).
 - **AboutView.swift** — App icon, version, developer info, check for updates. Uses native `Form` with `LabeledContent`.
 - **Updater.swift** — `@Observable` singleton that checks GitHub Releases API for updates, downloads `.zip`, unzips with `/usr/bin/ditto`, and atomically swaps the app bundle via `FileManager.replaceItemAt`. Also defines `Release` model and `Bundle` extensions (`appName`, `appVersion`, `appBuild`).
 
@@ -46,6 +47,7 @@ Hook (`~/.claude/hooks/notify_stop.sh`) receives stop event JSON via stdin → `
 | `useFixedMessage` | Bool | `false` | Notification, AppDelegate |
 | `fixedMessage` | String | `""` | Notification, AppDelegate |
 | `notificationSound` | String | `"Default"` | Notification, AppDelegate |
+| `customSoundFile` | String | `""` | Notification |
 
 ### Settings Window Pattern
 
