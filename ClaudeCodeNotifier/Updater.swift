@@ -60,7 +60,8 @@ final class Updater {
             let release = try decoder.decode(Release.self, from: data)
 
             let currentVersion = Bundle.main.appVersion ?? "0.0.0"
-            if release.tagName.compare(currentVersion, options: .numeric) == .orderedDescending {
+            let remoteVersion = release.tagName.hasPrefix("v") ? String(release.tagName.dropFirst()) : release.tagName
+            if remoteVersion.compare(currentVersion, options: .numeric) == .orderedDescending {
                 targetRelease = release
                 state = .available
             } else {
