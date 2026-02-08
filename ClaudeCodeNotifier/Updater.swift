@@ -127,7 +127,7 @@ final class Updater {
         let url = Bundle.main.bundleURL
         let task = Process()
         task.executableURL = URL(fileURLWithPath: "/usr/bin/open")
-        task.arguments = [url.path]
+        task.arguments = [url.path, "--args", "--after-update"]
         try? task.run()
         NSApp.terminate(nil)
     }
