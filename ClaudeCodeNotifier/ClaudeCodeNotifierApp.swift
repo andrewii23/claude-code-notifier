@@ -180,9 +180,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
         content.title = title
         content.body = message
         let soundName = UserDefaults.standard.string(forKey: "notificationSound") ?? "Default"
-        content.sound = soundName == "Default"
-            ? .default
-            : UNNotificationSound(named: UNNotificationSoundName(soundName + ".aiff"))
+        let customFile = UserDefaults.standard.string(forKey: "customSoundFile") ?? ""
+        content.sound = NotificationSettingsView.notificationSound(name: soundName, customFile: customFile)
 
         let request = UNNotificationRequest(
             identifier: UUID().uuidString,

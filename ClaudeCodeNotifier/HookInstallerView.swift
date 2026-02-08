@@ -125,19 +125,20 @@ enum HookInstaller {
     private static let scriptPath = hooksDir.appendingPathComponent("notify_stop.sh")
     private static let settingsPath = claudeDir.appendingPathComponent("settings.json")
 
+    // Leading whitespace is trimmed by the closing """ alignment
     private static let scriptContent = """
-    #!/bin/bash
-    INPUT=$(cat)
-    sleep 0.5
-    TRANSCRIPT=$(printf '%s' "$INPUT" | plutil -extract transcript_path raw -o - -- -)
-    if [ -n "$TRANSCRIPT" ] && [ "$TRANSCRIPT" != "<stdin>" ]; then
-        ENCODED=$(osascript -l JavaScript -e 'function run(argv) { return encodeURIComponent(argv[0]) }' -- "$TRANSCRIPT")
-        open -g "claudenotifier://notify?transcript=${ENCODED}"
-    else
-        open -g "claudenotifier://notify"
-    fi
-    exit 0
-    """
+        #!/bin/bash
+        INPUT=$(cat)
+        sleep 0.5
+        TRANSCRIPT=$(printf '%s' "$INPUT" | plutil -extract transcript_path raw -o - -- -)
+        if [ -n "$TRANSCRIPT" ] && [ "$TRANSCRIPT" != "<stdin>" ]; then
+            ENCODED=$(osascript -l JavaScript -e 'function run(argv) { return encodeURIComponent(argv[0]) }' -- "$TRANSCRIPT")
+            open -g "claudenotifier://notify?transcript=${ENCODED}"
+        else
+            open -g "claudenotifier://notify"
+        fi
+        exit 0
+        """
 
     static func checkStatus() -> Status {
         let fm = FileManager.default
