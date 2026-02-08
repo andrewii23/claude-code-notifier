@@ -1,11 +1,7 @@
 import SwiftUI
 
 struct AboutView: View {
-    @State private var isCheckingForUpdates = false
-
-    private var appVersion: String {
-        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
-    }
+    var updater = Updater.shared
 
     var body: some View {
         Form {
@@ -19,7 +15,7 @@ struct AboutView: View {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(Bundle.main.appName)
                             .font(.headline)
-                        Text("Version \(appVersion)")
+                        Text("Version \(Bundle.main.appVersion ?? "1.0")")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
@@ -27,13 +23,14 @@ struct AboutView: View {
                     Spacer()
 
                     Button("Check for Updates") {
-                        checkForUpdates()
+                        Task { await updater.checkForUpdates() }
                     }
                     .buttonStyle(.bordered)
-                    .disabled(isCheckingForUpdates)
+                    .disabled(updater.state == .checking)
                 }
 
-                if isCheckingForUpdates {
+                switch updater.state {
+                case .checking:
                     HStack {
                         Text("Checking for updates...")
                             .foregroundStyle(.secondary)
@@ -41,6 +38,46 @@ struct AboutView: View {
                         ProgressView()
                             .controlSize(.small)
                     }
+                case .available:
+                    if let release = updater.targetRelease {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Version \(release.tagName) available")
+                                    .font(.subheadline)
+                                Text(release.name)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            Button("Update") {
+                                Task { await updater.installUpdate() }
+                            }
+                            .buttonStyle(.borderedProminent)
+                        }
+                    }
+                case .downloading, .installing:
+                    HStack {
+                        Text(updater.state == .downloading ? "Downloading..." : "Installing...")
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        ProgressView(value: updater.progress)
+                            .frame(width: 100)
+                    }
+                case .upToDate:
+                    HStack {
+                        Text("You're up to date.")
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                    }
+                case .failed(let message):
+                    HStack {
+                        Text(message)
+                            .font(.caption)
+                            .foregroundStyle(.red)
+                        Spacer()
+                    }
+                case .idle:
+                    EmptyView()
                 }
             }
 
@@ -51,13 +88,5 @@ struct AboutView: View {
         }
         .formStyle(.grouped)
         .scrollContentBackground(.hidden)
-    }
-
-    private func checkForUpdates() {
-        isCheckingForUpdates = true
-        Task {
-            try? await Task.sleep(for: .seconds(2))
-            isCheckingForUpdates = false
-        }
     }
 }

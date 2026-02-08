@@ -32,8 +32,8 @@ Hook (`~/.claude/hooks/notify_stop.sh`) receives stop event JSON via stdin → `
 - **SettingsTab.swift** — `SettingsTab` enum defines tabs (general, notification, about) with icons, titles, and view routing. Also defines `Color.accentOrange`.
 - **GeneralSettingsView.swift** — Launch-at-login (`SMAppService`), hide menu bar icon, appearance picker. Uses native `Form` with `.formStyle(.grouped)`, `Toggle`, `Picker`, `LabeledContent`.
 - **NotificationSettingsView.swift** — Custom title, fixed message toggle, sound picker (reads `/System/Library/Sounds`), test notification button. Uses native `Form` with `.formStyle(.grouped)`.
-- **AboutView.swift** — App icon, version, developer info. Uses native `Form` with `LabeledContent`.
-- **ContentView.swift** — Unused template stub.
+- **AboutView.swift** — App icon, version, developer info, check for updates. Uses native `Form` with `LabeledContent`.
+- **Updater.swift** — `@Observable` singleton that checks GitHub Releases API for updates, downloads `.zip`, unzips with `/usr/bin/ditto`, and atomically swaps the app bundle via `FileManager.replaceItemAt`. Also defines `Release` model and `Bundle` extensions (`appName`, `appVersion`, `appBuild`).
 
 ### UserDefaults Keys (`@AppStorage`)
 
