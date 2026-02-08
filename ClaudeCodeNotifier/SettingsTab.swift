@@ -3,6 +3,7 @@ import SwiftUI
 enum SettingsTab: String, CaseIterable, Identifiable {
     case general
     case notification
+    case setup
     case about
 
     var id: String { rawValue }
@@ -11,6 +12,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         switch self {
         case .general: "General"
         case .notification: "Notification"
+        case .setup: "Setup"
         case .about: "About"
         }
     }
@@ -19,6 +21,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         switch self {
         case .general: "gear"
         case .notification: "bell.fill"
+        case .setup: "arrow.down.circle.fill"
         case .about: "info.circle.fill"
         }
     }
@@ -30,12 +33,13 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         switch self {
         case .general: GeneralSettingsView()
         case .notification: NotificationSettingsView()
+        case .setup: HookInstallerView()
         case .about: AboutView()
         }
     }
 
     static let settingsTabs: [SettingsTab] = [.general, .notification]
-    static let appTabs: [SettingsTab] = [.about]
+    static let appTabs: [SettingsTab] = [.setup, .about]
 }
 
 extension Color {
