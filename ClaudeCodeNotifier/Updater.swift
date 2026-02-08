@@ -128,7 +128,6 @@ final class Updater {
         let task = Process()
         task.executableURL = URL(fileURLWithPath: "/usr/bin/open")
         task.arguments = [url.path]
-        UserDefaults.standard.set(true, forKey: "showAfterUpdate")
         try? task.run()
         NSApp.terminate(nil)
     }
