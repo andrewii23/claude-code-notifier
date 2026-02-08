@@ -7,7 +7,7 @@ struct GeneralSettingsView: View {
     @AppStorage("appearance") private var appearance = AppAppearance.auto.rawValue
 
     var body: some View {
-        SettingsSection("General") {
+        SettingsSection {
             SettingsToggleRow(title: "Launch at login", isOn: $launchAtLogin)
                 .onChange(of: launchAtLogin) { _, newValue in
                     do {
@@ -22,11 +22,9 @@ struct GeneralSettingsView: View {
                 }
 
             SettingsToggleRow(title: "Hide menu bar icon", isOn: $hideMenuBarIcon)
-        }
 
-        SettingsSection("Appearance") {
             SettingsPickerRow(
-                title: "Mode",
+                title: "Appearance",
                 selection: $appearance,
                 options: AppAppearance.allCases.map { ($0.rawValue, $0.label) }
             )
@@ -145,13 +143,26 @@ struct SettingsToggleRow: View {
 struct SettingsTextFieldRow: View {
     let placeholder: String
     @Binding var text: String
+    var label: String?
 
     var body: some View {
-        TextField(placeholder, text: $text)
-            .textFieldStyle(.plain)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .frame(minHeight: 30)
+        HStack {
+            if let label {
+                Text(label)
+                    .padding(.vertical, 4)
+                Spacer()
+                TextField(placeholder, text: $text)
+                    .textFieldStyle(.plain)
+                    .multilineTextAlignment(.trailing)
+                    .frame(maxWidth: 200)
+            } else {
+                TextField(placeholder, text: $text)
+                    .textFieldStyle(.plain)
+            }
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .frame(minHeight: 30)
     }
 }
 

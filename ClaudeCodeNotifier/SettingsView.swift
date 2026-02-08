@@ -35,14 +35,14 @@ struct SettingsView: View {
             HStack(spacing: 8) {
                 SettingsIconView(systemImage: selectedTab.icon)
                 Text(selectedTab.title)
-                    .font(.title2)
+                    .font(.title2.bold())
                 Spacer()
             }
             .frame(height: 50)
             .padding(.horizontal, 12)
 
             ScrollView {
-                VStack(alignment: .leading, spacing: 15) {
+                VStack(alignment: .leading, spacing: 10) {
                     selectedTab.view()
                 }
                 .padding(12)
@@ -88,14 +88,13 @@ struct SidebarTabButton: View {
                     .font(.system(size: 13))
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
+            .padding(6)
             .frame(minHeight: 30)
             .background(
-                RoundedRectangle(cornerRadius: 12)
+                RoundedRectangle(cornerRadius: 8)
                     .fill(backgroundColor)
             )
-            .contentShape(RoundedRectangle(cornerRadius: 12))
+            .contentShape(RoundedRectangle(cornerRadius: 8))
         }
         .buttonStyle(.plain)
         .onHover { isHovering = $0 }

@@ -18,7 +18,7 @@ struct ClaudeCodeNotifierApp: App {
 
             Divider()
 
-            Button("Quit ClaudeCodeNotifier") {
+            Button("Quit") {
                 NSApp.terminate(nil)
             }
             .keyboardShortcut("q", modifiers: .command)
@@ -27,13 +27,14 @@ struct ClaudeCodeNotifierApp: App {
 }
 
 @MainActor
-final class SettingsWindowManager {
+final class SettingsWindowManager: NSObject, NSWindowDelegate {
     static let shared = SettingsWindowManager()
     private var window: NSWindow?
 
     func show() {
         if let window {
             window.makeKeyAndOrderFront(nil)
+            NSApp.setActivationPolicy(.regular)
             NSApp.activate()
             return
         }
@@ -47,6 +48,7 @@ final class SettingsWindowManager {
         )
         window.titlebarAppearsTransparent = true
         window.titleVisibility = .hidden
+        window.delegate = self
         window.contentView = NSHostingView(rootView: settingsView)
         window.center()
         window.isReleasedWhenClosed = false
@@ -55,6 +57,10 @@ final class SettingsWindowManager {
 
         NSApp.setActivationPolicy(.regular)
         NSApp.activate()
+    }
+
+    func windowWillClose(_ notification: Notification) {
+        NSApp.setActivationPolicy(.accessory)
     }
 }
 
@@ -77,6 +83,18 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
         )
 
         NSApp.setActivationPolicy(.accessory)
+
+        NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+            if event.modifierFlags.contains(.command) && event.charactersIgnoringModifiers == "," {
+                SettingsWindowManager.shared.show()
+                return nil
+            }
+            return event
+        }
+    }
+
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        false
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {

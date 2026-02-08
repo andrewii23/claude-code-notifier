@@ -1,4 +1,5 @@
 import SwiftUI
+import UserNotifications
 
 struct NotificationSettingsView: View {
     @AppStorage("notificationTitle") private var notificationTitle = ""
@@ -7,20 +8,31 @@ struct NotificationSettingsView: View {
     @AppStorage("notificationSound") private var notificationSound = "Default"
 
     var body: some View {
-        SettingsSection("Title") {
-            SettingsTextFieldRow(placeholder: "Claude Code", text: $notificationTitle)
-        }
-
-        SettingsSection("Message") {
+        SettingsSection {
+            SettingsTextFieldRow(placeholder: "Claude Code", text: $notificationTitle, label: "Title")
             SettingsToggleRow(title: "Use fixed message", isOn: $useFixedMessage)
 
             if useFixedMessage {
-                SettingsTextFieldRow(placeholder: "Done!", text: $fixedMessage)
+                SettingsTextFieldRow(placeholder: "Done!", text: $fixedMessage, label: "Message")
             }
+
+            SoundPickerRow(selection: $notificationSound)
         }
 
-        SettingsSection("Sound") {
-            SoundPickerRow(selection: $notificationSound)
+        HStack {
+            Spacer()
+            Button("Test Notification") {
+                let content = UNMutableNotificationContent()
+                content.title = notificationTitle.isEmpty ? "Claude Code" : notificationTitle
+                content.body = useFixedMessage ? (fixedMessage.isEmpty ? "Done!" : fixedMessage) : "Test notification"
+                content.sound = notificationSound == "Default"
+                    ? .default
+                    : UNNotificationSound(named: UNNotificationSoundName(notificationSound + ".aiff"))
+                UNUserNotificationCenter.current().add(
+                    UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
+                )
+            }
+            .buttonStyle(.bordered)
         }
     }
 }
