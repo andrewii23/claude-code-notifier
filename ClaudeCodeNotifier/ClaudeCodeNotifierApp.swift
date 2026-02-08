@@ -31,15 +31,18 @@ final class SettingsWindowManager: NSObject, NSWindowDelegate {
     static let shared = SettingsWindowManager()
     private var window: NSWindow?
 
-    func show() {
+    func show(tab: SettingsTab? = nil) {
         if let window {
+            if let tab {
+                window.contentView = NSHostingView(rootView: SettingsView(initialTab: tab))
+            }
             window.makeKeyAndOrderFront(nil)
             NSApp.setActivationPolicy(.regular)
             NSApp.activate()
             return
         }
 
-        let settingsView = SettingsView()
+        let settingsView = SettingsView(initialTab: tab ?? .general)
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 660, height: 420),
             styleMask: [.titled, .closable, .miniaturizable, .fullSizeContentView],
@@ -94,6 +97,15 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
             }
             return event
         }
+
+        Task {
+            try? await Task.sleep(for: .seconds(5))
+            if HookInstaller.checkStatus() != .installed {
+                SettingsWindowManager.shared.show(tab: .setup)
+            }
+        }
+
+        Updater.shared.startAutoCheckLoop()
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {

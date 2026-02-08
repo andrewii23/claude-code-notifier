@@ -1,8 +1,12 @@
 import SwiftUI
 
 struct SettingsView: View {
-    @State private var selectedTab: SettingsTab? = .general
+    @State private var selectedTab: SettingsTab?
     @AppStorage("appearance") private var appearance = AppAppearance.auto.rawValue
+
+    init(initialTab: SettingsTab = .general) {
+        _selectedTab = State(initialValue: initialTab)
+    }
 
     var body: some View {
         NavigationSplitView {

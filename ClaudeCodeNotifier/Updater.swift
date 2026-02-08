@@ -9,6 +9,12 @@ final class Updater {
     private(set) var progress: Double = 0
 
     private var checkTask: Task<(), Never>?
+    private var autoCheckTask: Task<(), Never>?
+
+    var autoUpdateEnabled: Bool {
+        get { UserDefaults.standard.bool(forKey: "autoUpdateEnabled") }
+        set { UserDefaults.standard.set(newValue, forKey: "autoUpdateEnabled") }
+    }
 
     enum UpdateState: Equatable {
         case idle
@@ -36,6 +42,25 @@ final class Updater {
 
     private static let repoOwner = "andrewii23"
     private static let repoName = "claude-code-notifier"
+
+    func startAutoCheckLoop() {
+        autoCheckTask?.cancel()
+        autoCheckTask = Task {
+            try? await Task.sleep(for: .seconds(5))
+            while !Task.isCancelled {
+                await checkForUpdates()
+                if autoUpdateEnabled && state == .available {
+                    await installUpdate()
+                }
+                try? await Task.sleep(for: .seconds(6 * 60 * 60))
+            }
+        }
+    }
+
+    func stopAutoCheckLoop() {
+        autoCheckTask?.cancel()
+        autoCheckTask = nil
+    }
 
     func checkForUpdates() async {
         state = .checking

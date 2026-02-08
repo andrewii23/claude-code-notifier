@@ -75,6 +75,14 @@ struct AboutView: View {
             }
 
             Section {
+                Toggle("Automatically check and install updates", isOn: Binding(
+                    get: { updater.autoUpdateEnabled },
+                    set: { updater.autoUpdateEnabled = $0 }
+                ))
+                .tint(Color.accentOrange)
+            }
+
+            Section {
                 LabeledContent("Developer", value: "ii23")
                 LabeledContent("Description", value: "Notification bridge for Claude Code")
             }
