@@ -4,19 +4,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-CC Noti (ClaudeCodeNotifier) is a macOS menu bar app that listens for `claudenotifier://notify` URL scheme callbacks and displays native macOS notifications. It runs as a background-only menu bar app (`.accessory` activation policy) with no main window. App Sandbox is disabled to allow direct reading of transcript files from `~/.claude/projects/`.
+ClaudeCodeNotifier is a macOS menu bar app that listens for `claudenotifier://notify` URL scheme callbacks and displays native macOS notifications. It runs as a background-only menu bar app (`.accessory` activation policy) with no main window. App Sandbox is disabled to allow direct reading of transcript files from `~/.claude/projects/`.
 
 ## Build Commands
 
 ```bash
 # Build
-xcodebuild -project "CC Noti.xcodeproj" -scheme ClaudeCodeNotifier -configuration Debug
+xcodebuild -project "ClaudeCodeNotifier.xcodeproj" -scheme ClaudeCodeNotifier -configuration Debug
 
 # Run tests
-xcodebuild test -project "CC Noti.xcodeproj" -scheme ClaudeCodeNotifier
+xcodebuild test -project "ClaudeCodeNotifier.xcodeproj" -scheme ClaudeCodeNotifier
 
 # Release build
-xcodebuild -project "CC Noti.xcodeproj" -scheme ClaudeCodeNotifier -configuration Release
+xcodebuild -project "ClaudeCodeNotifier.xcodeproj" -scheme ClaudeCodeNotifier -configuration Release
 ```
 
 ## Architecture

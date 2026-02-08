@@ -199,7 +199,7 @@
 					};
 				};
 			};
-			buildConfigurationList = B4F281BB2F21CCDE00FD076A /* Build configuration list for PBXProject "CC Noti" */;
+			buildConfigurationList = B4F281BB2F21CCDE00FD076A /* Build configuration list for PBXProject "ClaudeCodeNotifier" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -545,7 +545,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		B4F281BB2F21CCDE00FD076A /* Build configuration list for PBXProject "CC Noti" */ = {
+		B4F281BB2F21CCDE00FD076A /* Build configuration list for PBXProject "ClaudeCodeNotifier" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				B4F281DF2F21CCDF00FD076A /* Debug */,

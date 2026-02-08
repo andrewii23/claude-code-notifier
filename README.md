@@ -16,7 +16,7 @@ Native macOS notification bridge for [Claude Code](https://claude.ai/code). Get 
 ```bash
 git clone https://github.com/andrewii23/claude-code-notifier.git
 cd claude-code-notifier
-open "CC Noti.xcodeproj"
+open ClaudeCodeNotifier.xcodeproj
 ```
 
 Build and run in Xcode (Cmd+R). The app appears in your menu bar.
