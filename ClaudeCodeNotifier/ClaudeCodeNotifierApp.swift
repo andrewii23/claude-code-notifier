@@ -167,10 +167,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
             result = result.replacingOccurrences(of: "  +", with: " ", options: .regularExpression)
             result = result.trimmingCharacters(in: .whitespaces)
 
-            if result.count > 200 {
-                result = String(result.prefix(197)) + "..."
-            }
-
             return result.isEmpty ? nil : result
         }
 
