@@ -47,6 +47,7 @@ struct AboutView: View {
                             Task { await updater.installUpdate() }
                         }
                         .buttonStyle(.borderedProminent)
+                        .tint(Color.accentOrange)
                     }
                 case .downloading, .installing:
                     HStack {
@@ -55,6 +56,7 @@ struct AboutView: View {
                         Spacer()
                         ProgressView(value: updater.progress)
                             .frame(width: 100)
+                            .tint(Color.accentOrange)
                     }
                 case .upToDate:
                     HStack {

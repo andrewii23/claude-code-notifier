@@ -25,6 +25,7 @@ struct HookInstallerView: View {
                     case .notInstalled, .partial:
                         Button("Install") { install() }
                             .buttonStyle(.borderedProminent)
+                            .tint(Color.accentOrange)
                     case .checking:
                         ProgressView()
                             .controlSize(.small)
@@ -92,7 +93,7 @@ enum HookInstaller {
         var color: Color {
             switch self {
             case .checking: .secondary
-            case .installed: .green
+            case .installed: Color.accentOrange
             case .notInstalled: .secondary
             case .partial: .orange
             }
