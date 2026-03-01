@@ -40,7 +40,8 @@ struct HookInstallerView: View {
             }
 
             Section {
-                LabeledContent("Script", value: "~/.claude/hooks/notify_stop.sh")
+                LabeledContent("Stop Hook", value: "~/.claude/hooks/notify_stop.sh")
+                LabeledContent("Notification Hook", value: "~/.claude/hooks/notify_notification.sh")
                 LabeledContent("Settings", value: "~/.claude/settings.json")
             }
         }
@@ -103,11 +104,11 @@ enum HookInstaller {
     private static let claudeDir = FileManager.default.homeDirectoryForCurrentUser
         .appendingPathComponent(".claude")
     private static let hooksDir = claudeDir.appendingPathComponent("hooks")
-    private static let scriptPath = hooksDir.appendingPathComponent("notify_stop.sh")
+    private static let stopScriptPath = hooksDir.appendingPathComponent("notify_stop.sh")
+    private static let notificationScriptPath = hooksDir.appendingPathComponent("notify_notification.sh")
     private static let settingsPath = claudeDir.appendingPathComponent("settings.json")
 
-    // Leading whitespace is trimmed by the closing """ alignment
-    private static let scriptContent = """
+    private static let stopScriptContent = """
         #!/bin/bash
         INPUT=$(cat)
         sleep 0.5
@@ -121,14 +122,30 @@ enum HookInstaller {
         exit 0
         """
 
+    private static let notificationScriptContent = """
+        #!/bin/bash
+        INPUT=$(cat)
+        sleep 0.5
+        TYPE=$(printf '%s' "$INPUT" | plutil -extract notification_type raw -o - -- -)
+        MESSAGE=$(printf '%s' "$INPUT" | plutil -extract message raw -o - -- -)
+        ENCODED_MSG=$(osascript -l JavaScript -e 'function run(argv) { return encodeURIComponent(argv[0]) }' -- "$MESSAGE")
+        open -g "claudenotifier://attention?type=${TYPE}&message=${ENCODED_MSG}"
+        exit 0
+        """
+
     static func checkStatus() -> Status {
         let fm = FileManager.default
-        let scriptExists = fm.fileExists(atPath: scriptPath.path)
-        let settingsHasHook = readSettingsHook() != nil
+        let stopExists = fm.fileExists(atPath: stopScriptPath.path)
+        let notifExists = fm.fileExists(atPath: notificationScriptPath.path)
+        let hasStopHook = readSettingsHook(event: "Stop", scriptName: "notify_stop.sh") != nil
+        let hasNotifHook = readSettingsHook(event: "Notification", scriptName: "notify_notification.sh") != nil
 
-        if scriptExists && settingsHasHook { return .installed }
-        if scriptExists || settingsHasHook { return .partial }
-        return .notInstalled
+        let allInstalled = stopExists && notifExists && hasStopHook && hasNotifHook
+        let noneInstalled = !stopExists && !notifExists && !hasStopHook && !hasNotifHook
+
+        if allInstalled { return .installed }
+        if noneInstalled { return .notInstalled }
+        return .partial
     }
 
     static func install() throws {
@@ -136,46 +153,51 @@ enum HookInstaller {
 
         try fm.createDirectory(at: hooksDir, withIntermediateDirectories: true)
 
-        try scriptContent.write(to: scriptPath, atomically: true, encoding: .utf8)
+        for (path, content) in [(stopScriptPath, stopScriptContent), (notificationScriptPath, notificationScriptContent)] {
+            try content.write(to: path, atomically: true, encoding: .utf8)
+            let process = Process()
+            process.executableURL = URL(fileURLWithPath: "/bin/chmod")
+            process.arguments = ["+x", path.path]
+            try process.run()
+            process.waitUntilExit()
+        }
 
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/bin/chmod")
-        process.arguments = ["+x", scriptPath.path]
-        try process.run()
-        process.waitUntilExit()
-
-        try addSettingsHook()
+        try addSettingsHook(event: "Stop", scriptPath: "~/.claude/hooks/notify_stop.sh", scriptName: "notify_stop.sh")
+        try addSettingsHook(event: "Notification", scriptPath: "~/.claude/hooks/notify_notification.sh", scriptName: "notify_notification.sh")
     }
 
     static func uninstall() throws {
         let fm = FileManager.default
 
-        if fm.fileExists(atPath: scriptPath.path) {
-            try fm.removeItem(at: scriptPath)
-        }
-
-        try removeSettingsHook()
-    }
-
-    private static func readSettingsHook() -> [[String: Any]]? {
-        guard let data = FileManager.default.contents(atPath: settingsPath.path),
-              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let hooks = json["hooks"] as? [String: Any],
-              let stop = hooks["Stop"] as? [[String: Any]] else {
-            return nil
-        }
-
-        let hasOurHook = stop.contains { entry in
-            guard let entryHooks = entry["hooks"] as? [[String: Any]] else { return false }
-            return entryHooks.contains { hook in
-                (hook["command"] as? String)?.contains("notify_stop.sh") == true
+        for path in [stopScriptPath, notificationScriptPath] {
+            if fm.fileExists(atPath: path.path) {
+                try fm.removeItem(at: path)
             }
         }
 
-        return hasOurHook ? stop : nil
+        try removeSettingsHook(event: "Stop", scriptName: "notify_stop.sh")
+        try removeSettingsHook(event: "Notification", scriptName: "notify_notification.sh")
     }
 
-    private static func addSettingsHook() throws {
+    private static func readSettingsHook(event: String, scriptName: String) -> [[String: Any]]? {
+        guard let data = FileManager.default.contents(atPath: settingsPath.path),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let hooks = json["hooks"] as? [String: Any],
+              let entries = hooks[event] as? [[String: Any]] else {
+            return nil
+        }
+
+        let hasOurHook = entries.contains { entry in
+            guard let entryHooks = entry["hooks"] as? [[String: Any]] else { return false }
+            return entryHooks.contains { hook in
+                (hook["command"] as? String)?.contains(scriptName) == true
+            }
+        }
+
+        return hasOurHook ? entries : nil
+    }
+
+    private static func addSettingsHook(event: String, scriptPath: String, scriptName: String) throws {
         var json: [String: Any] = [:]
 
         if let data = FileManager.default.contents(atPath: settingsPath.path),
@@ -184,12 +206,12 @@ enum HookInstaller {
         }
 
         var hooks = json["hooks"] as? [String: Any] ?? [:]
-        var stop = hooks["Stop"] as? [[String: Any]] ?? []
+        var entries = hooks[event] as? [[String: Any]] ?? []
 
-        let alreadyInstalled = stop.contains { entry in
+        let alreadyInstalled = entries.contains { entry in
             guard let entryHooks = entry["hooks"] as? [[String: Any]] else { return false }
             return entryHooks.contains { hook in
-                (hook["command"] as? String)?.contains("notify_stop.sh") == true
+                (hook["command"] as? String)?.contains(scriptName) == true
             }
         }
 
@@ -199,42 +221,42 @@ enum HookInstaller {
                 "hooks": [
                     [
                         "type": "command",
-                        "command": "~/.claude/hooks/notify_stop.sh"
+                        "command": scriptPath
                     ]
                 ]
             ]
-            stop.append(hookEntry)
+            entries.append(hookEntry)
         }
 
-        hooks["Stop"] = stop
+        hooks[event] = entries
         json["hooks"] = hooks
 
         let data = try JSONSerialization.data(withJSONObject: json, options: [.prettyPrinted, .sortedKeys])
-        try data.write(to: settingsPath)
+        try data.write(to: self.settingsPath)
     }
 
-    private static func removeSettingsHook() throws {
+    private static func removeSettingsHook(event: String, scriptName: String) throws {
         guard let data = FileManager.default.contents(atPath: settingsPath.path),
               var json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
             return
         }
 
         guard var hooks = json["hooks"] as? [String: Any],
-              var stop = hooks["Stop"] as? [[String: Any]] else {
+              var entries = hooks[event] as? [[String: Any]] else {
             return
         }
 
-        stop.removeAll { entry in
+        entries.removeAll { entry in
             guard let entryHooks = entry["hooks"] as? [[String: Any]] else { return false }
             return entryHooks.contains { hook in
-                (hook["command"] as? String)?.contains("notify_stop.sh") == true
+                (hook["command"] as? String)?.contains(scriptName) == true
             }
         }
 
-        if stop.isEmpty {
-            hooks.removeValue(forKey: "Stop")
+        if entries.isEmpty {
+            hooks.removeValue(forKey: event)
         } else {
-            hooks["Stop"] = stop
+            hooks[event] = entries
         }
 
         if hooks.isEmpty {

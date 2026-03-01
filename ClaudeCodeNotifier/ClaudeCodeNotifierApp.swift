@@ -158,10 +158,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
             return
         }
 
-        if url.scheme == "claudenotifier" && url.host == "notify" {
-            let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
-            let queryItems = components?.queryItems
+        guard url.scheme == "claudenotifier" else { return }
 
+        let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
+        let queryItems = components?.queryItems
+
+        switch url.host {
+        case "notify":
             var dynamicMessage: String
             if let transcriptPath = queryItems?.first(where: { $0.name == "transcript" })?.value {
                 dynamicMessage = parseTranscript(at: transcriptPath) ?? "Done!"
@@ -176,6 +179,22 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
             let body = useFixed ? fixedMessage : dynamicMessage
 
             showNotification(title: title, message: body)
+
+        case "attention":
+            let type = queryItems?.first(where: { $0.name == "type" })?.value ?? ""
+            let message = queryItems?.first(where: { $0.name == "message" })?.value ?? "Needs attention"
+
+            let title: String
+            switch type {
+            case "permission_prompt": title = "Claude Code - Permission Required"
+            case "idle_prompt": title = "Claude Code - Waiting"
+            default: title = "Claude Code - Attention"
+            }
+
+            showNotification(title: title, message: message)
+
+        default:
+            break
         }
     }
 
