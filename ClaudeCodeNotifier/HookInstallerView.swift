@@ -125,6 +125,7 @@ enum HookInstaller {
     private static let notificationScriptContent = """
         #!/bin/bash
         INPUT=$(cat)
+        sleep 0.5
         TYPE=$(printf '%s' "$INPUT" | plutil -extract notification_type raw -o - -- -)
         TRANSCRIPT=$(printf '%s' "$INPUT" | plutil -extract transcript_path raw -o - -- -)
         if [ -n "$TRANSCRIPT" ] && [ "$TRANSCRIPT" != "<stdin>" ]; then
