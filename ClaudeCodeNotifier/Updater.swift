@@ -100,6 +100,8 @@ final class Updater {
     func installUpdate() async {
         guard let release = targetRelease, let asset = release.assets.first else { return }
 
+        let appPath = Bundle.main.bundleURL.path
+
         state = .downloading
         progress = 0
 
@@ -118,16 +120,16 @@ final class Updater {
         state = .installing
 
         do {
-            try await unzipAndReplace(zipPath: tempURL.path)
+            try await unzipAndReplace(zipPath: tempURL.path, appPath: appPath)
             try? FileManager.default.removeItem(at: tempURL)
             progress = 1.0
-            relaunch()
+            relaunch(appPath: appPath)
         } catch {
             state = .failed("Install failed: \(error.localizedDescription)")
         }
     }
 
-    private func unzipAndReplace(zipPath: String) async throws {
+    private func unzipAndReplace(zipPath: String, appPath: String) async throws {
         let fm = FileManager.default
         let tempDir = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try fm.createDirectory(at: tempDir, withIntermediateDirectories: true)
@@ -144,15 +146,19 @@ final class Updater {
             throw UpdateError.noAppBundle
         }
 
-        _ = try fm.replaceItemAt(Bundle.main.bundleURL, withItemAt: newApp, backupItemName: nil, options: [.usingNewMetadataOnly])
+        let appURL = URL(fileURLWithPath: appPath)
+        if fm.fileExists(atPath: appPath) {
+            try fm.removeItem(at: appURL)
+        }
+        try fm.moveItem(at: newApp, to: appURL)
         try fm.removeItem(at: tempDir)
     }
 
-    private func relaunch() {
-        let url = Bundle.main.bundleURL
+    private func relaunch(appPath: String) {
+        let script = "sleep 1; open \"\(appPath)\""
         let task = Process()
-        task.executableURL = URL(fileURLWithPath: "/usr/bin/open")
-        task.arguments = [url.path]
+        task.executableURL = URL(fileURLWithPath: "/bin/bash")
+        task.arguments = ["-c", script]
         try? task.run()
         NSApp.terminate(nil)
     }
