@@ -39,28 +39,8 @@ struct HookInstallerView: View {
             }
 
             Section {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("What this does")
-                        .font(.subheadline.bold())
-
-                    Text("Creates a hook script and updates Claude Code settings so you receive a notification whenever Claude Code finishes a task.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-
-                LabeledContent("Script") {
-                    Text("~/.claude/hooks/notify_stop.sh")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .textSelection(.enabled)
-                }
-
-                LabeledContent("Settings") {
-                    Text("~/.claude/settings.json")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .textSelection(.enabled)
-                }
+                LabeledContent("Script", value: "~/.claude/hooks/notify_stop.sh")
+                LabeledContent("Settings", value: "~/.claude/settings.json")
             }
         }
         .formStyle(.grouped)

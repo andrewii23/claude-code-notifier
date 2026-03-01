@@ -2,12 +2,35 @@ import SwiftUI
 import UniformTypeIdentifiers
 import UserNotifications
 
+enum SoundVolume: String, CaseIterable {
+    case soft = "Soft"
+    case balanced = "Balanced"
+    case loud = "Loud"
+
+    var level: Float {
+        switch self {
+        case .soft: 0.25
+        case .balanced: 0.6
+        case .loud: 1.0
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .soft: "speaker.wave.1.fill"
+        case .balanced: "speaker.wave.2.fill"
+        case .loud: "speaker.wave.3.fill"
+        }
+    }
+}
+
 struct NotificationSettingsView: View {
     @AppStorage("notificationTitle") private var notificationTitle = ""
     @AppStorage("useFixedMessage") private var useFixedMessage = false
     @AppStorage("fixedMessage") private var fixedMessage = ""
     @AppStorage("notificationSound") private var notificationSound = "Default"
     @AppStorage("customSoundFile") private var customSoundFile = ""
+    @AppStorage("soundVolume") private var soundVolume = SoundVolume.balanced.rawValue
     @State private var showFilePicker = false
 
     var body: some View {
@@ -34,10 +57,10 @@ struct NotificationSettingsView: View {
                 .onChange(of: notificationSound) { _, newValue in
                     if newValue == "Custom" {
                         if !customSoundFile.isEmpty {
-                            previewCustomSound()
+                            previewSound()
                         }
                     } else if newValue != "Default" {
-                        NSSound(named: NSSound.Name(newValue))?.play()
+                        previewSound()
                     }
                 }
 
@@ -67,6 +90,15 @@ struct NotificationSettingsView: View {
                     ) { result in
                         handleFileImport(result)
                     }
+                }
+
+                Picker("Volume", selection: $soundVolume) {
+                    ForEach(SoundVolume.allCases, id: \.rawValue) { vol in
+                        Text(vol.rawValue).tag(vol.rawValue)
+                    }
+                }
+                .onChange(of: soundVolume) { _, _ in
+                    previewSound()
                 }
 
                 HStack {
@@ -106,38 +138,43 @@ struct NotificationSettingsView: View {
 
             try FileManager.default.copyItem(at: url, to: dest)
             customSoundFile = destName
-            previewCustomSound()
+            previewSound()
         } catch {
             customSoundFile = ""
         }
     }
 
-    private func previewCustomSound() {
-        guard !customSoundFile.isEmpty else { return }
-        let soundsDir = FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent("Library/Sounds")
-        let path = soundsDir.appendingPathComponent(customSoundFile).path
-        NSSound(contentsOfFile: path, byReference: true)?.play()
+    private func previewSound() {
+        let volume = SoundVolume(rawValue: soundVolume) ?? .balanced
+        Self.playSound(name: notificationSound, customFile: customSoundFile, volume: volume)
     }
 
     private func sendTestNotification() {
         let content = UNMutableNotificationContent()
         content.title = notificationTitle.isEmpty ? "Claude Code" : notificationTitle
         content.body = useFixedMessage ? (fixedMessage.isEmpty ? "Done!" : fixedMessage) : "Test notification"
-        content.sound = Self.notificationSound(name: notificationSound, customFile: customSoundFile)
+        content.sound = nil
         UNUserNotificationCenter.current().add(
             UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
         )
+        let volume = SoundVolume(rawValue: soundVolume) ?? .balanced
+        Self.playSound(name: notificationSound, customFile: customSoundFile, volume: volume)
     }
 
-    static func notificationSound(name: String, customFile: String) -> UNNotificationSound {
+    static func playSound(name: String, customFile: String, volume: SoundVolume) {
+        let sound: NSSound?
         if name == "Default" {
-            return .default
+            sound = NSSound(named: "Tink")
         } else if name == "Custom" && !customFile.isEmpty {
-            return UNNotificationSound(named: UNNotificationSoundName(customFile))
+            let path = FileManager.default.homeDirectoryForCurrentUser
+                .appendingPathComponent("Library/Sounds")
+                .appendingPathComponent(customFile).path
+            sound = NSSound(contentsOfFile: path, byReference: true)
         } else {
-            return UNNotificationSound(named: UNNotificationSoundName(name + ".aiff"))
+            sound = NSSound(named: NSSound.Name(name))
         }
+        sound?.volume = volume.level
+        sound?.play()
     }
 
     private static let systemSounds: [String] = {

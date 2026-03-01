@@ -85,6 +85,9 @@ struct AboutView: View {
             Section {
                 LabeledContent("Developer", value: "ii23")
                 LabeledContent("Description", value: "Notification bridge for Claude Code")
+                LabeledContent("GitHub") {
+                    Link("andrewii23/claude-code-notifier", destination: URL(string: "https://github.com/andrewii23/claude-code-notifier")!)
+                }
             }
         }
         .formStyle(.grouped)

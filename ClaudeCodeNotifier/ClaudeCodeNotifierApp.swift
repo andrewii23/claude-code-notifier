@@ -6,6 +6,7 @@ struct ClaudeCodeNotifierApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @AppStorage("hideMenuBarIcon") private var hideMenuBarIcon = false
     @AppStorage("notificationsEnabled") private var notificationsEnabled = true
+    @AppStorage("soundVolume") private var soundVolume = SoundVolume.balanced.rawValue
 
     var body: some Scene {
         MenuBarExtra("ClaudeCodeNotifier", image: "menubarIcon", isInserted: Binding(
@@ -19,6 +20,24 @@ struct ClaudeCodeNotifierApp: App {
                     notificationsEnabled ? "Disable Notifications" : "Enable Notifications",
                     systemImage: notificationsEnabled ? "xmark.circle.fill" : "checkmark.circle.fill"
                 )
+            }
+
+            Divider()
+
+            Text("Configure:")
+
+            Menu("Volume") {
+                ForEach(SoundVolume.allCases, id: \.rawValue) { vol in
+                    Button {
+                        soundVolume = vol.rawValue
+                    } label: {
+                        if soundVolume == vol.rawValue {
+                            Label(vol.rawValue, systemImage: "checkmark")
+                        } else {
+                            Text(vol.rawValue)
+                        }
+                    }
+                }
             }
 
             Divider()
@@ -204,22 +223,20 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
     func showNotification(title: String, message: String) {
         guard UserDefaults.standard.bool(forKey: "notificationsEnabled") else { return }
 
-        let center = UNUserNotificationCenter.current()
-
         let content = UNMutableNotificationContent()
         content.title = title
         content.body = message
-        let soundName = UserDefaults.standard.string(forKey: "notificationSound") ?? "Default"
-        let customFile = UserDefaults.standard.string(forKey: "customSoundFile") ?? ""
-        content.sound = NotificationSettingsView.notificationSound(name: soundName, customFile: customFile)
+        content.sound = nil
 
-        let request = UNNotificationRequest(
-            identifier: UUID().uuidString,
-            content: content,
-            trigger: nil
+        UNUserNotificationCenter.current().add(
+            UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
         )
 
-        center.add(request)
+        let soundName = UserDefaults.standard.string(forKey: "notificationSound") ?? "Default"
+        let customFile = UserDefaults.standard.string(forKey: "customSoundFile") ?? ""
+        let volumeRaw = UserDefaults.standard.string(forKey: "soundVolume") ?? SoundVolume.balanced.rawValue
+        let volume = SoundVolume(rawValue: volumeRaw) ?? .balanced
+        NotificationSettingsView.playSound(name: soundName, customFile: customFile, volume: volume)
     }
 
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
