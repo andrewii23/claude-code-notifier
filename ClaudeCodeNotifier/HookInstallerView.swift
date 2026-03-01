@@ -125,17 +125,9 @@ enum HookInstaller {
     private static let notificationScriptContent = """
         #!/bin/bash
         INPUT=$(cat)
-        sleep 0.5
-        TYPE=$(printf '%s' "$INPUT" | plutil -extract notification_type raw -o - -- -)
-        TRANSCRIPT=$(printf '%s' "$INPUT" | plutil -extract transcript_path raw -o - -- -)
-        if [ -n "$TRANSCRIPT" ] && [ "$TRANSCRIPT" != "<stdin>" ]; then
-            ENCODED=$(osascript -l JavaScript -e 'function run(argv) { return encodeURIComponent(argv[0]) }' -- "$TRANSCRIPT")
-            open -g "claudenotifier://attention?type=${TYPE}&transcript=${ENCODED}"
-        else
-            MESSAGE=$(printf '%s' "$INPUT" | plutil -extract message raw -o - -- -)
-            ENCODED_MSG=$(osascript -l JavaScript -e 'function run(argv) { return encodeURIComponent(argv[0]) }' -- "$MESSAGE")
-            open -g "claudenotifier://attention?type=${TYPE}&message=${ENCODED_MSG}"
-        fi
+        MESSAGE=$(printf '%s' "$INPUT" | plutil -extract message raw -o - -- -)
+        ENCODED_MSG=$(osascript -l JavaScript -e 'function run(argv) { return encodeURIComponent(argv[0]) }' -- "$MESSAGE")
+        open -g "claudenotifier://attention?message=${ENCODED_MSG}"
         exit 0
         """
 

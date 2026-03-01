@@ -181,21 +181,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
             showNotification(title: title, message: body)
 
         case "attention":
-            let type = queryItems?.first(where: { $0.name == "type" })?.value ?? ""
+            let message = queryItems?.first(where: { $0.name == "message" })?.value ?? "Needs attention"
 
-            var message: String
-            if let transcriptPath = queryItems?.first(where: { $0.name == "transcript" })?.value {
-                message = parseTranscript(at: transcriptPath) ?? "Needs attention"
-            } else {
-                message = queryItems?.first(where: { $0.name == "message" })?.value ?? "Needs attention"
-            }
-
-            let title: String
-            switch type {
-            case "permission_prompt": title = "Claude Code - Permission Required"
-            case "idle_prompt": title = "Claude Code - Waiting"
-            default: title = "Claude Code - Attention"
-            }
+            let defaults = UserDefaults.standard
+            let title = defaults.string(forKey: "notificationTitle").flatMap { $0.isEmpty ? nil : $0 } ?? "Claude Code"
 
             showNotification(title: title, message: message)
 
