@@ -182,7 +182,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
 
         case "attention":
             let type = queryItems?.first(where: { $0.name == "type" })?.value ?? ""
-            let message = queryItems?.first(where: { $0.name == "message" })?.value ?? "Needs attention"
+
+            var message: String
+            if let transcriptPath = queryItems?.first(where: { $0.name == "transcript" })?.value {
+                message = parseTranscript(at: transcriptPath) ?? "Needs attention"
+            } else {
+                message = queryItems?.first(where: { $0.name == "message" })?.value ?? "Needs attention"
+            }
 
             let title: String
             switch type {
